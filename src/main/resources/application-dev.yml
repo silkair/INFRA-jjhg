@@ -67,6 +67,8 @@ cloud:
       static: ap-northeast-2
     s3:
       bucket: ${AWS_S3_BUCKET_DEV}
+      # 비워 두면 AWS S3. 로컬·클러스터에서는 MinIO 주소를 넣는다
+      endpoint: ${S3_ENDPOINT:}
 
 # 프로메테우스
 management:
