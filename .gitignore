@@ -46,3 +46,5 @@ jjhg-fcm-key.json
 
 
 jjhg-fcm-key.json
+### 로컬 비밀값 ###
+.env

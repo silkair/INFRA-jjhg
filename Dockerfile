@@ -15,7 +15,8 @@ COPY src src
 RUN ./gradlew build --no-daemon -x test
 
 # 실행
-FROM openjdk:21-slim
+# 공식 openjdk 이미지는 지원이 중단돼(Docker Hub 공지) 유지보수되는 Temurin JRE로 바꾼다
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 

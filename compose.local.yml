@@ -1,0 +1,105 @@
+# 로컬 기동용 구성 (M0)
+# 실행: cp .env.example .env  →  docker compose -f compose.local.yml up -d --build
+# 원본은 EC2에서 docker run -e ... 로 띄웠다. 여기서는 의존 서비스까지 한 파일로 묶는다.
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: jjhg
+      TZ: UTC
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7.2
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      # 앱이 ap-northeast-2로 서명하므로 리전을 맞춘다
+      MINIO_REGION: ap-northeast-2
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # 웹 콘솔
+    volumes:
+      - minio-data:/data
+
+  # 버킷을 한 번 만들고 끝나는 일회성 컨테이너
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    # MinIO가 뜰 때까지 접속을 재시도한 뒤 버킷을 만든다
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do sleep 2; done &&
+      mc mb --ignore-existing local/$${S3_BUCKET}
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      S3_BUCKET: ${S3_BUCKET}
+
+  app:
+    build: .
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      # DB·Redis는 compose 서비스 이름으로 찾는다
+      DEV_DB_URL: jdbc:mysql://mysql:3306/jjhg?serverTimezone=UTC
+      DEV_DB_USERNAME: root
+      DEV_DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      DEV_REDIS_HOST: redis
+      DEV_REDIS_PORT: 6379
+      DEV_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      DEV_REDIS_INVITE_KEY: "contract:invite:"
+      DEV_REDIS_SUPERVISORS_KEY: "contract:supervisors:"
+      DEV_JWT_SECRET_KEY: ${JWT_SECRET}
+      DEV_JWT_ACCESS_EXPIRATION: 30m
+      DEV_JWT_REFRESH_EXPIRATION: 14d
+      # 소셜 로그인은 쓰지 않는다(테스트 토큰은 scripts/issue-test-token.sh). 값만 비워 둔다
+      DEV_OAUTH_KAKAO_CLIENT_ID: ""
+      DEV_OAUTH_KAKAO_CLIENT_SECRET: ""
+      DEV_OAUTH_NAVER_CLIENT_ID: ""
+      DEV_OAUTH_NAVER_CLIENT_SECRET: ""
+      DEV_INVITE_URL_PREFIX: http://localhost:8080/api/invite/
+      DEV_CORS_ORIGINS: http://localhost:3000
+      # Firebase는 호출하는 곳이 없다. 없는 경로를 주면 오류 로그만 남고 기동은 계속된다
+      DEV_FCM_KEY_PATH: file:/nonexistent/fcm-key.json
+      # MinIO를 S3처럼 쓴다. presigned URL은 호스트(브라우저·curl)가 접속할 주소로 만들어야 하므로 localhost
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      AWS_S3_BUCKET_DEV: ${S3_BUCKET}
+      S3_ENDPOINT: http://localhost:9000
+
+volumes:
+  mysql-data:
+  minio-data:
