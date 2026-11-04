@@ -30,35 +30,43 @@ services:
       timeout: 3s
       retries: 20
 
-  minio:
-    image: minio/minio:latest
-    command: ["server", "/data", "--console-address", ":9001"]
+  # S3 호환 오브젝트 스토리지. MinIO는 2026년 커뮤니티 이미지 배포를 중단해
+  # (Docker Hub minio/minio·minio/mc 삭제) 유지보수되는 RustFS(Apache-2.0)로 바꿨다
+  rustfs:
+    image: rustfs/rustfs:1.0.0
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      # 앱이 ap-northeast-2로 서명하므로 리전을 맞춘다
-      MINIO_REGION: ap-northeast-2
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      # 앱이 ap-northeast-2로 서명하므로 리전을 맞춘다 (기본값 us-east-1)
+      RUSTFS_REGION: ap-northeast-2
     ports:
       - "9000:9000"   # S3 API
       - "9001:9001"   # 웹 콘솔
     volumes:
-      - minio-data:/data
+      - s3-data:/data
 
-  # 버킷을 한 번 만들고 끝나는 일회성 컨테이너
-  minio-init:
-    image: minio/mc:latest
+  # 버킷을 한 번 만들고 끝나는 일회성 컨테이너. 특정 제품의 CLI 대신 AWS CLI를 써서
+  # 스토리지를 바꿔도 이 부분은 그대로 쓴다
+  s3-init:
+    image: amazon/aws-cli:latest
     depends_on:
-      - minio
-    # MinIO가 뜰 때까지 접속을 재시도한 뒤 버킷을 만든다
+      - rustfs
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
+      AWS_DEFAULT_REGION: ap-northeast-2
+      S3_BUCKET: ${S3_BUCKET}
+    # 스토리지가 뜰 때까지 재시도하고, 버킷이 없을 때만 만든다
     entrypoint: >
       /bin/sh -c "
-      until mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do sleep 2; done &&
-      mc mb --ignore-existing local/$${S3_BUCKET}
+      until aws --endpoint-url http://rustfs:9000 s3 ls >/dev/null 2>&1; do sleep 2; done;
+      aws --endpoint-url http://rustfs:9000 s3api head-bucket --bucket $${S3_BUCKET} 2>/dev/null
+      || aws --endpoint-url http://rustfs:9000 s3 mb s3://$${S3_BUCKET}
       "
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      S3_BUCKET: ${S3_BUCKET}
 
   app:
     build: .
@@ -67,7 +75,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      minio-init:
+      s3-init:
         condition: service_completed_successfully
     ports:
       - "8080:8080"
@@ -94,12 +102,12 @@ services:
       DEV_CORS_ORIGINS: http://localhost:3000
       # Firebase는 호출하는 곳이 없다. 없는 경로를 주면 오류 로그만 남고 기동은 계속된다
       DEV_FCM_KEY_PATH: file:/nonexistent/fcm-key.json
-      # MinIO를 S3처럼 쓴다. presigned URL은 호스트(브라우저·curl)가 접속할 주소로 만들어야 하므로 localhost
-      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
-      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      # RustFS를 S3처럼 쓴다. presigned URL은 호스트(브라우저·curl)가 접속할 주소로 만들어야 하므로 localhost
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
       AWS_S3_BUCKET_DEV: ${S3_BUCKET}
       S3_ENDPOINT: http://localhost:9000
 
 volumes:
   mysql-data:
-  minio-data:
+  s3-data:
