@@ -47,5 +47,5 @@ Swagger: http://localhost:8080/docs
 |---|---|---|
 | 실행 | EC2에서 `docker run -e ...` 20여 개 | compose 한 파일 + `.env` |
 | 의존 서비스 | 별도로 띄움 | MySQL·Redis·RustFS를 compose에 포함 |
-| 오브젝트 스토리지 | AWS S3 | RustFS (S3 호환). MinIO는 2026년 이미지 배포 중단으로 제외 |
+| 오브젝트 스토리지 | AWS S3 | RustFS (S3 호환) |
 | 배포 워크플로 | GHCR + self-hosted runner | 제거. M3에서 새로 만든다 |

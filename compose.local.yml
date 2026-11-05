@@ -30,8 +30,7 @@ services:
       timeout: 3s
       retries: 20
 
-  # S3 호환 오브젝트 스토리지. MinIO는 2026년 커뮤니티 이미지 배포를 중단해
-  # (Docker Hub minio/minio·minio/mc 삭제) 유지보수되는 RustFS(Apache-2.0)로 바꿨다
+  # S3 호환 오브젝트 스토리지 (RustFS, Apache-2.0)
   rustfs:
     image: rustfs/rustfs:1.0.0
     environment:

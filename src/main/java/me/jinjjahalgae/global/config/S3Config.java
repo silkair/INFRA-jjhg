@@ -14,7 +14,7 @@ import java.net.URI;
 @Configuration
 public class S3Config {
 
-    // 비워 두면 AWS S3를 그대로 쓴다. MinIO 등 S3 호환 스토리지를 쓸 때만 주소를 넣는다.
+    // 비워 두면 AWS S3를 그대로 쓴다. S3 호환 스토리지(RustFS 등)를 쓸 때만 주소를 넣는다.
     @Value("${cloud.aws.s3.endpoint:}")
     private String endpoint;
 
@@ -26,7 +26,7 @@ public class S3Config {
 
         if (StringUtils.hasText(endpoint)) {
             builder.endpointOverride(URI.create(endpoint))
-                    // MinIO는 버킷을 서브도메인(bucket.host)이 아니라 경로(host/bucket)로 받는다.
+                    // 자체 구축 S3 호환 스토리지는 버킷을 서브도메인(bucket.host)이 아니라 경로(host/bucket)로 받는다.
                     .serviceConfiguration(S3Configuration.builder()
                             .pathStyleAccessEnabled(true)
                             .build());
