@@ -19,6 +19,10 @@ NODES=(                                 # 클러스터 노드 목록: "IP 이름
 export DEBIAN_FRONTEND=noninteractive
 export NEEDRESTART_MODE=a
 
+# 부팅 직후에는 Ubuntu 자동 업데이트(unattended-upgrades)가 apt 잠금을 잡고 있을 수 있다.
+# 잠금이 풀릴 때까지 최대 10분 기다린다 (기다리는 동안 apt가 "Waiting for cache lock"을 출력한다)
+APT_OPTS=(-o DPkg::Lock::Timeout=600)
+
 log() { echo; echo "==> $*"; }
 die() { echo "오류: $*" >&2; exit 1; }
 
@@ -63,8 +67,8 @@ sysctl --system > /dev/null                   # 지금 적용 (부팅 때는 위
 
 # ---------------------------------------------------------------------------
 log "E. containerd 설치·설정"
-apt-get update -qq
-apt-get install -y -qq containerd > /dev/null
+apt-get "${APT_OPTS[@]}" update -qq
+apt-get "${APT_OPTS[@]}" install -y -qq containerd > /dev/null
 mkdir -p /etc/containerd
 # 설정 파일이 없거나 systemd cgroup이 아니면 기본값으로 새로 만들고 systemd로 바꾼다
 if ! grep -q 'SystemdCgroup = true' /etc/containerd/config.toml 2>/dev/null; then
@@ -80,18 +84,18 @@ systemctl restart containerd
 
 # ---------------------------------------------------------------------------
 log "F. kubeadm·kubelet·kubectl 설치 (${K8S_MINOR})"
-apt-get install -y -qq curl gpg > /dev/null
+apt-get "${APT_OPTS[@]}" install -y -qq curl gpg > /dev/null
 mkdir -p -m 755 /etc/apt/keyrings
 curl -fsSL "https://pkgs.k8s.io/core:/stable:/${K8S_MINOR}/deb/Release.key" \
   | gpg --dearmor --yes -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg   # --yes: 다시 실행할 때 덮어쓰기 질문 없이
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/${K8S_MINOR}/deb/ /" \
   > /etc/apt/sources.list.d/kubernetes.list
-apt-get update -qq
-apt-get install -y -qq kubelet kubeadm kubectl > /dev/null
+apt-get "${APT_OPTS[@]}" update -qq
+apt-get "${APT_OPTS[@]}" install -y -qq kubelet kubeadm kubectl > /dev/null
 
 # ---------------------------------------------------------------------------
 log "G. 버전 고정"
-apt-mark hold kubelet kubeadm kubectl > /dev/null
+apt-mark "${APT_OPTS[@]}" hold kubelet kubeadm kubectl > /dev/null
 systemctl enable kubelet > /dev/null 2>&1     # 시작은 kubeadm init/join이 한다
 
 # ---------------------------------------------------------------------------
