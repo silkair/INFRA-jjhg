@@ -33,3 +33,4 @@
 - 로컬 실행: [docs/infra/M0-local.md](docs/infra/M0-local.md)
 - 원본 서비스 소개(기능·ERD·아키텍처): [docs/original-README.md](docs/original-README.md)
 - 클러스터 구축: [docs/infra/M1-cluster.md](docs/infra/M1-cluster.md)
+- 구축기(블로그): [kubeadm 클러스터 직접 구축](https://silkair001.tistory.com/55)
