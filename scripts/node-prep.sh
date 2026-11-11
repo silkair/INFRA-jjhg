@@ -83,7 +83,7 @@ systemctl enable containerd > /dev/null 2>&1
 systemctl restart containerd
 
 # ---------------------------------------------------------------------------
-log "F. kubeadm·kubelet·kubectl 설치 (${K8S_MINOR})"
+log "F. kubeadm·kubelet·kubectl·crictl 설치 (${K8S_MINOR})"
 apt-get "${APT_OPTS[@]}" install -y -qq curl gpg > /dev/null
 mkdir -p -m 755 /etc/apt/keyrings
 curl -fsSL "https://pkgs.k8s.io/core:/stable:/${K8S_MINOR}/deb/Release.key" \
@@ -91,7 +91,9 @@ curl -fsSL "https://pkgs.k8s.io/core:/stable:/${K8S_MINOR}/deb/Release.key" \
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/${K8S_MINOR}/deb/ /" \
   > /etc/apt/sources.list.d/kubernetes.list
 apt-get "${APT_OPTS[@]}" update -qq
-apt-get "${APT_OPTS[@]}" install -y -qq kubelet kubeadm kubectl > /dev/null
+apt-get "${APT_OPTS[@]}" install -y -qq kubelet kubeadm kubectl cri-tools > /dev/null
+# crictl(노드에서 containerd를 직접 보는 도구)이 붙을 런타임을 지정한다. 없으면 실행할 때마다 경고가 나온다
+echo 'runtime-endpoint: unix:///run/containerd/containerd.sock' > /etc/crictl.yaml
 
 # ---------------------------------------------------------------------------
 log "G. 버전 고정"
@@ -111,6 +113,7 @@ check "br_netfilter 모듈"         bash -c 'lsmod | grep -q "^br_netfilter"'
 check "ip_forward = 1"            bash -c '[[ "$(sysctl -n net.ipv4.ip_forward)" == 1 ]]'
 check "bridge-nf-call-iptables=1" bash -c '[[ "$(sysctl -n net.bridge.bridge-nf-call-iptables)" == 1 ]]'
 check "containerd 실행 중"        systemctl is-active --quiet containerd
+check "crictl로 containerd 접속"  crictl info
 check "kubelet·kubeadm·kubectl 고정" bash -c '[[ "$(apt-mark showhold | grep -cE "^(kubelet|kubeadm|kubectl)$")" == 3 ]]'
 echo "  containerd $(containerd --version | awk '{print $3}') / kubeadm $(kubeadm version -o short)"
 
