@@ -1,0 +1,74 @@
+# 진짜할게 API — Deployment + Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jjhg-api
+  namespace: jjhg
+spec:
+  # 1개로 둔다. 앱 안의 스케줄러(5분 주기·자정 작업)는 파드 수만큼 중복 실행된다
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jjhg-api
+  template:
+    metadata:
+      labels:
+        app: jjhg-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/silkair/infra-jjhg:0.1.0
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: jjhg-api-config
+          env:                       # 비밀값은 Secret에서 꺼내 앱이 기대하는 이름으로 넣는다
+            - name: DEV_DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: jjhg-secrets, key: MYSQL_ROOT_PASSWORD }
+            - name: DEV_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: jjhg-secrets, key: REDIS_PASSWORD }
+            - name: DEV_JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef: { name: jjhg-secrets, key: JWT_SECRET }
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef: { name: jjhg-secrets, key: S3_ACCESS_KEY }
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef: { name: jjhg-secrets, key: S3_SECRET_KEY }
+          # 기동이 느린 Java 앱: 첫 기동은 최대 3분까지 기다린다
+          startupProbe:
+            httpGet: { path: /actuator/health, port: 8080 }
+            periodSeconds: 5
+            failureThreshold: 36
+          # 준비 여부: DB·Redis까지 포함한 health가 UP일 때만 트래픽을 받는다
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8080 }
+            periodSeconds: 10
+          # 생존 여부: 프로세스가 포트를 열고 있는지만 본다.
+          # DB가 잠깐 죽었다고 앱을 재시작하면 문제만 커지므로 health를 쓰지 않는다
+          livenessProbe:
+            tcpSocket: { port: 8080 }
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              memory: 768Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jjhg-api
+  namespace: jjhg
+spec:
+  selector:
+    app: jjhg-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
