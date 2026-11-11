@@ -12,7 +12,7 @@
 |---|---|---|
 | M0 | 로컬 기동 (Docker Compose: MySQL·Redis·RustFS·앱) | 완료 |
 | M1 | VMware VM 3대에 kubeadm 클러스터 구축, Bash 노드 준비 스크립트 | 완료 |
-| M2 | Deployment·Service·Ingress, StatefulSet+PVC, MetalLB | 예정 |
+| M2 | Deployment·Service·Ingress, StatefulSet+PVC, MetalLB | 완료 |
 | M3 | GitHub Actions(이미지 빌드·GHCR) + ArgoCD GitOps 배포 | 예정 |
 | M4 | kube-prometheus-stack, SLO 1개, 알림 규칙 | 예정 |
 | M5 | AWS 기본 망을 Terraform으로 생성·삭제 | 예정 |
@@ -34,3 +34,4 @@
 - 원본 서비스 소개(기능·ERD·아키텍처): [docs/original-README.md](docs/original-README.md)
 - 클러스터 구축: [docs/infra/M1-cluster.md](docs/infra/M1-cluster.md)
 - 구축기(블로그): [kubeadm 클러스터 직접 구축](https://silkair001.tistory.com/55)
+- 앱 배포: [docs/infra/M2-deploy.md](docs/infra/M2-deploy.md)

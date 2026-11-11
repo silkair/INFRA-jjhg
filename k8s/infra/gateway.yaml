@@ -1,0 +1,24 @@
+# Gateway API: 클러스터 입구
+# GatewayClass = 어떤 구현체가 처리하나 (Envoy Gateway)
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: eg
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+---
+# Gateway = 실제 입구 하나. Envoy 프록시가 뜨고, MetalLB가 IP를 준다
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: jjhg-gateway
+  namespace: jjhg
+spec:
+  gatewayClassName: eg
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same          # 같은 네임스페이스(jjhg)의 HTTPRoute만 붙을 수 있다

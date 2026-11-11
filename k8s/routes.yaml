@@ -1,0 +1,47 @@
+# HTTPRoute = 도메인별로 어느 Service로 보낼지 정하는 규칙
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: jjhg-api
+  namespace: jjhg
+spec:
+  parentRefs:
+    - name: jjhg-gateway
+  hostnames:
+    - jjhg.local
+  rules:
+    - backendRefs:
+        - name: jjhg-api
+          port: 8080
+---
+# presigned URL로 노트북이 직접 업로드하는 S3 API
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: rustfs-s3
+  namespace: jjhg
+spec:
+  parentRefs:
+    - name: jjhg-gateway
+  hostnames:
+    - s3.jjhg.local
+  rules:
+    - backendRefs:
+        - name: rustfs
+          port: 9000
+---
+# RustFS 웹 콘솔
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: rustfs-console
+  namespace: jjhg
+spec:
+  parentRefs:
+    - name: jjhg-gateway
+  hostnames:
+    - s3-console.jjhg.local
+  rules:
+    - backendRefs:
+        - name: rustfs
+          port: 9001

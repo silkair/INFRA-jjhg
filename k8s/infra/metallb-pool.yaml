@@ -1,0 +1,20 @@
+# MetalLB가 LoadBalancer Service에 나눠 줄 IP 범위 (L2 모드)
+# VMware NAT의 DHCP 범위(.128~.199)와 겹치지 않게 .200~.220을 쓴다
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: lan-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    - 192.168.125.200-192.168.125.220
+---
+# L2 모드: 할당한 IP를 가진 노드가 ARP로 "이 IP는 나다"라고 응답한다
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: lan-l2
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - lan-pool
