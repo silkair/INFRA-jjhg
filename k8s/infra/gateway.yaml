@@ -21,4 +21,6 @@ spec:
       port: 80
       allowedRoutes:
         namespaces:
-          from: Same          # 같은 네임스페이스(jjhg)의 HTTPRoute만 붙을 수 있다
+          # 다른 네임스페이스(argocd 등)의 HTTPRoute도 이 입구를 쓰게 한다.
+          # 실습 환경이라 All. 실무라면 라벨로 허용할 네임스페이스를 고른다(Selector)
+          from: All

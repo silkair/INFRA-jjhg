@@ -1,0 +1,22 @@
+# ArgoCD Application: GitHub 저장소의 k8s/ 폴더 = jjhg 앱의 원하는 상태
+# 저장소가 바뀌면 클러스터를 그 상태로 맞춘다
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: jjhg
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/silkair/INFRA-jjhg.git
+    targetRevision: release
+    path: k8s
+    directory:
+      recurse: false        # k8s/ 바로 아래 파일만. infra/(클러스터 공통)·test/는 제외
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: jjhg
+  syncPolicy:
+    automated:
+      prune: true           # Git에서 지운 리소스는 클러스터에서도 지운다
+      selfHeal: true        # 누가 클러스터를 직접 바꾸면 Git 상태로 되돌린다

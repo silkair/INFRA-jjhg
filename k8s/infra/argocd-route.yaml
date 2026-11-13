@@ -1,0 +1,16 @@
+# ArgoCD 웹 화면: argocd.jjhg.local → argocd-server
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  parentRefs:
+    - name: jjhg-gateway
+      namespace: jjhg
+  hostnames:
+    - argocd.jjhg.local
+  rules:
+    - backendRefs:
+        - name: argocd-server
+          port: 80
