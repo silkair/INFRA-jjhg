@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: ghcr.io/silkair/infra-jjhg:0.1.0
+          image: ghcr.io/silkair/infra-jjhg:sha-ab096c0
           ports:
             - containerPort: 8080
           envFrom:
