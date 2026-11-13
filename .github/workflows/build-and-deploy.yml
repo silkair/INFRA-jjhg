@@ -1,0 +1,66 @@
+# 앱 코드가 바뀌면 이미지를 만들어 GHCR에 올리고, k8s/app.yaml의 이미지 태그를 갱신한다.
+# 클러스터 반영은 ArgoCD가 한다 (이 워크플로는 클러스터에 접속하지 않는다)
+name: build-and-deploy
+
+on:
+  push:
+    branches: [release]
+    paths:                      # 앱 코드·빌드 설정이 바뀔 때만. k8s/ 변경으로는 돌지 않는다
+      - "src/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "gradle/**"
+      - "gradlew"
+      - "Dockerfile"
+  workflow_dispatch:            # Actions 화면에서 손으로도 실행할 수 있게
+
+permissions:
+  contents: write               # k8s/app.yaml 태그 갱신 커밋
+  packages: write               # GHCR에 이미지 push
+
+concurrency:
+  group: build-and-deploy       # 동시에 두 번 돌지 않게 (태그 커밋이 엇갈리는 것 방지)
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ghcr.io/silkair/infra-jjhg
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: 이미지 태그 정하기 (커밋 SHA 앞 7자리)
+        id: vars
+        run: echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: GHCR 로그인 (저장소가 받는 임시 토큰 사용, 개인 토큰 불필요)
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 이미지 빌드·push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE }}:${{ steps.vars.outputs.tag }}
+          cache-from: type=gha          # Gradle 의존성 등 이전 빌드 결과 재사용
+          cache-to: type=gha,mode=max
+
+      - name: 매니페스트의 이미지 태그 갱신 → ArgoCD가 감지해 배포
+        env:
+          TAG: ${{ steps.vars.outputs.tag }}
+        run: |
+          sed -i -E "s#(image: ${IMAGE}:).*#\1${TAG}#" k8s/app.yaml
+          grep -n "image: ${IMAGE}:${TAG}" k8s/app.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add k8s/app.yaml
+          git commit -m "deploy: jjhg-api ${TAG}"
+          git pull --rebase origin release   # 그사이 다른 커밋이 올라왔으면 위에 얹는다
+          git push origin HEAD:release
