@@ -4,7 +4,7 @@
 
 - 원본: [prgrms-web-devcourse-final-project/WEB5_7_SixPeoplePlz_BE](https://github.com/prgrms-web-devcourse-final-project/WEB5_7_SixPeoplePlz_BE) (프로그래머스 데브코스 팀 프로젝트, 2025.07~08)
 - 애플리케이션 코드는 원본 팀의 작업입니다. 원본에서 저는 계약 도메인과 서비스 계층 테스트를 맡았습니다.
-- **이 저장소에서 추가·변경한 인프라 구성은 모두 제 작업입니다.** 앱 코드 변경은 S3 호환 스토리지 엔드포인트 설정 1건뿐입니다.
+- **이 저장소에서 추가·변경한 인프라 구성은 모두 제 작업입니다.** 앱 코드 변경은 S3 호환 스토리지 엔드포인트 설정과, 배포 확인용 /health 응답 문구 2건뿐입니다.
 
 ## 목표
 
@@ -13,7 +13,7 @@
 | M0 | 로컬 기동 (Docker Compose: MySQL·Redis·RustFS·앱) | 완료 |
 | M1 | VMware VM 3대에 kubeadm 클러스터 구축, Bash 노드 준비 스크립트 | 완료 |
 | M2 | Deployment·Service·Ingress, StatefulSet+PVC, MetalLB | 완료 |
-| M3 | GitHub Actions(이미지 빌드·GHCR) + ArgoCD GitOps 배포 | 예정 |
+| M3 | GitHub Actions(이미지 빌드·GHCR) + ArgoCD GitOps 배포 | 완료 |
 | M4 | kube-prometheus-stack, SLO 1개, 알림 규칙 | 예정 |
 | M5 | AWS 기본 망을 Terraform으로 생성·삭제 | 예정 |
 | M6 | 장애 재현과 대응 기록 | 예정 |
@@ -35,3 +35,4 @@
 - 클러스터 구축: [docs/infra/M1-cluster.md](docs/infra/M1-cluster.md)
 - 구축기(블로그): [kubeadm 클러스터 직접 구축](https://silkair001.tistory.com/55)
 - 앱 배포: [docs/infra/M2-deploy.md](docs/infra/M2-deploy.md)
+- 배포 자동화: [docs/infra/M3-gitops.md](docs/infra/M3-gitops.md)
