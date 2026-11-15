@@ -1,0 +1,54 @@
+# kube-prometheus-stack Helm 값 (worker 6GB 2대에 맞춘 가벼운 설정)
+# 설치: helm install kps prometheus-community/kube-prometheus-stack --version <버전> -n monitoring -f monitoring-values.yaml
+
+# 리소스 이름을 짧게: kps-prometheus, kps-alertmanager ...
+fullnameOverride: kps
+
+grafana:
+  admin:
+    existingSecret: grafana-admin     # 비밀번호는 Git에 두지 않고 직접 만든 Secret에서 읽는다
+    userKey: admin-user
+    passwordKey: admin-password
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 384Mi }
+  sidecar:
+    dashboards:
+      enabled: true
+      searchNamespace: ALL            # 다른 네임스페이스(jjhg)의 대시보드 ConfigMap도 불러온다
+
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    resources:
+      requests: { cpu: 100m, memory: 512Mi }
+      limits: { memory: 1536Mi }
+    # 아래 세 줄: Helm 릴리스 라벨이 없는 ServiceMonitor·PrometheusRule도 찾게 한다
+    # (우리 앱의 수집 설정과 알림 규칙은 Git의 k8s/에 두고 ArgoCD가 배포하므로)
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    storageSpec:                      # 지표를 PVC에 저장해 Prometheus가 재시작돼도 남게
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests: { cpu: 10m, memory: 32Mi }
+      limits: { memory: 128Mi }
+
+# kubeadm은 아래 구성 요소의 지표 포트를 127.0.0.1에만 열어 둔다.
+# 그대로 두면 수집이 실패해 "Down" 알림이 계속 울리므로 이번 범위에서는 수집하지 않는다.
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
