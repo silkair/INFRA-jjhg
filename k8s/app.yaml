@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         app: jjhg-api
+      annotations:
+        config-rev: "2"
     spec:
       containers:
         - name: api

@@ -25,7 +25,9 @@ data:
   # Firebase는 호출하는 곳이 없다. 없는 경로를 주면 오류 로그만 남기고 기동한다
   DEV_FCM_KEY_PATH: file:/nonexistent/fcm-key.json
   AWS_S3_BUCKET_DEV: jjhg-local
-  # presigned URL은 클러스터 바깥(노트북)이 접속할 주소로 만들어야 한다. ⑤에서 Ingress로 연결한다
+  # presigned URL은 클러스터 바깥(노트북)이 접속할 주소로 만들어야 한다. Gateway의 HTTPRoute(s3.jjhg.local)로 연결한다
   S3_ENDPOINT: http://s3.jjhg.local
   # JVM이 컨테이너 메모리 제한의 75%까지 힙으로 쓰게 한다 (기본 25%는 이 제한에서 너무 작다)
   JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
+  # p95 응답 시간을 구하려고 요청 시간 히스토그램(_bucket)을 켠다
+  SPRING_APPLICATION_JSON: '{"management":{"metrics":{"distribution":{"percentiles-histogram":{"http.server.requests":true}}}}}'
