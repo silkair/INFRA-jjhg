@@ -65,6 +65,8 @@ kind: Service
 metadata:
   name: jjhg-api
   namespace: jjhg
+  labels:
+    app: jjhg-api
 spec:
   selector:
     app: jjhg-api
