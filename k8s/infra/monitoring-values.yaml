@@ -41,6 +41,37 @@ alertmanager:
     resources:
       requests: { cpu: 10m, memory: 32Mi }
       limits: { memory: 128Mi }
+    secrets:
+      - alertmanager-discord   # /etc/alertmanager/secrets/alertmanager-discord/webhook-url
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      receiver: "null"
+      group_by: [alertname, namespace]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      routes:
+        # Watchdog: 경보 경로가 살아 있는지 보려고 항상 켜 두는 알림 → 보내지 않는다
+        - receiver: "null"
+          matchers: ['alertname = "Watchdog"']
+        - receiver: "null"
+          matchers: ['alertname = "InfoInhibitor"']
+        # 나머지 warning·critical (앱 알림 + 차트 기본 클러스터 알림)
+        - receiver: discord
+          matchers: ['severity =~ "warning|critical"']
+    receivers:
+      - name: "null"
+      - name: discord
+        discord_configs:
+          - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord/webhook-url
+            send_resolved: true         # 해결되면 해결 메시지도 보낸다
+    inhibit_rules:
+      # 같은 알림이 critical로 울리고 있으면 warning은 보내지 않는다
+      - source_matchers: ['severity = "critical"']
+        target_matchers: ['severity =~ "warning|info"']
+        equal: [namespace, alertname]
 
 # kubeadm은 아래 구성 요소의 지표 포트를 127.0.0.1에만 열어 둔다.
 # 그대로 두면 수집이 실패해 "Down" 알림이 계속 울리므로 이번 범위에서는 수집하지 않는다.

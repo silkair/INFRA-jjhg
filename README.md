@@ -36,3 +36,5 @@
 - 구축기(블로그): [kubeadm 클러스터 직접 구축](https://silkair001.tistory.com/55)
 - 앱 배포: [docs/infra/M2-deploy.md](docs/infra/M2-deploy.md)
 - 배포 자동화: [docs/infra/M3-gitops.md](docs/infra/M3-gitops.md)
+- 배포·GitOps 정리(블로그): [진짜할게를 쿠버네티스에 배포하고 GitOps로 자동화하기](https://silkair001.tistory.com/56)
+- 관측·알림 정리(블로그): [쿠버네티스 클러스터에 관측과 알림 붙이기](https://silkair001.tistory.com/57)
