@@ -17,6 +17,13 @@ spec:
       annotations:
         config-rev: "3"
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: mysql
+              topologyKey: kubernetes.io/hostname
       containers:
         - name: api
           image: ghcr.io/silkair/infra-jjhg:sha-d685986
@@ -57,7 +64,7 @@ spec:
             periodSeconds: 20
           resources:
             requests:
-              cpu: 200m
+              cpu: 500m
               memory: 512Mi
             limits:
               memory: 768Mi
