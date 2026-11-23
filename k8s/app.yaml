@@ -18,7 +18,7 @@ spec:
         config-rev: "3"
     spec:
       affinity:
-        podAntiAffinity:
+        podAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchLabels:
