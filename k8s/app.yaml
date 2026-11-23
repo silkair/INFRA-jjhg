@@ -6,7 +6,7 @@ metadata:
   namespace: jjhg
 spec:
   # 1개로 둔다. 앱 안의 스케줄러(5분 주기·자정 작업)는 파드 수만큼 중복 실행된다
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: jjhg-api
@@ -17,13 +17,14 @@ spec:
       annotations:
         config-rev: "3"
     spec:
-      affinity:
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels:
-                  app: mysql
-              topologyKey: kubernetes.io/hostname
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: jjhg-api
+                topologyKey: kubernetes.io/hostname
       containers:
         - name: api
           image: ghcr.io/silkair/infra-jjhg:sha-d685986

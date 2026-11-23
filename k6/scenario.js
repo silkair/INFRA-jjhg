@@ -2,7 +2,7 @@
 //
 // 실행 (노트북, 저장소 폴더):
 //   k6 run -e PROFILE=smoke  -e USER_MIN=.. -e USER_MAX=.. -e JWT_SECRET="$(grep ^JWT_SECRET= k8s/secret.env | cut -d= -f2-)" k6/scenario.js
-//   PROFILE = smoke(1회 점검) | steady(배경 트래픽) | ramp(한계 측정)
+//   PROFILE = smoke(1회 점검) | steady(배경 트래픽) | ramp(한계 측정) | measure(예열 2분 + 측정 4분, 비교용)
 //
 // 토큰은 앱과 같은 규칙(HS512, subject = user id)으로 여기서 만든다. JWT_SECRET은 명령에서만 넘기고 파일에 쓰지 않는다.
 
@@ -31,24 +31,42 @@ const profiles = {
   ramp: {
     executor: 'ramping-arrival-rate',
     startRate: 2, timeUnit: '1s',
-    preAllocatedVUs: 50, maxVUs: 400,
+    preAllocatedVUs: 50, maxVUs: parseInt(__ENV.MAX_VUS || '400'),
     stages: [
       { target: 5, duration: '2m' },
       { target: 10, duration: '2m' },
       { target: 20, duration: '2m' },
       { target: 40, duration: '2m' },
-      { target: 60, duration: '2m' },
+      { target: parseInt(__ENV.PEAK || '60'), duration: '2m' },   // 처리량이 커지면 PEAK를 올려 끝까지 밀어 본다
       { target: 0, duration: '30s' },
     ],
   },
 };
 
+// measure: 비교 측정용. 앞 2분은 낮은 속도로 예열(JVM JIT·커넥션 준비), 뒤 4분만 측정 구간(main)으로 따로 집계한다
+const measure = {
+  warmup: {
+    executor: 'constant-arrival-rate', rate: 5, timeUnit: '1s', duration: '2m',
+    preAllocatedVUs: 10, maxVUs: 50,
+  },
+  main: {
+    executor: 'constant-arrival-rate',
+    rate: parseInt(__ENV.RATE || '30'), timeUnit: '1s',
+    duration: __ENV.DURATION || '4m', startTime: '2m',
+    preAllocatedVUs: 20, maxVUs: 100,
+  },
+};
+
 export const options = {
-  scenarios: { main: profiles[PROFILE] },
+  scenarios: PROFILE === 'measure' ? measure : { main: profiles[PROFILE] },
   thresholds: {
     http_req_failed: ['rate<0.01'],      // 실패 요청 1% 미만
     http_req_duration: ['p(95)<500'],    // p95 500ms 미만 (지금 알림 기준과 같음)
     checks: ['rate>0.99'],
+    // 측정 구간(main)만 따로 요약에 나오게 한다
+    'http_reqs{scenario:main}': ['count>=0'],
+    'http_req_duration{scenario:main}': ['p(95)<500'],
+    'dropped_iterations{scenario:main}': ['count>=0'],
   },
 };
 
