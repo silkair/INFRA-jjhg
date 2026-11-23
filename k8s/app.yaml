@@ -15,7 +15,7 @@ spec:
       labels:
         app: jjhg-api
       annotations:
-        config-rev: "2"
+        config-rev: "3"
     spec:
       containers:
         - name: api
