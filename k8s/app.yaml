@@ -17,6 +17,7 @@ spec:
       annotations:
         config-rev: "3"
     spec:
+      affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 100
