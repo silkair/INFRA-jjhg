@@ -5,8 +5,8 @@ metadata:
   name: jjhg-api
   namespace: jjhg
 spec:
-  # R2′ 대조 측정: 1개. (앱 안의 스케줄러는 파드 수만큼 중복 실행된다 → B1-1에서 분산 락)
-  replicas: 1
+  # R3′ 대조 측정: 2개. 스케줄러 중복 실행은 B1-1에서 분산 락으로 막는다
+  replicas: 2
   selector:
     matchLabels:
       app: jjhg-api
@@ -18,13 +18,15 @@ spec:
         config-rev: "3"
     spec:
       affinity:
-        # R2′ 대조 측정: MySQL과 같은 노드에 둔다
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels:
-                  app: mysql
-              topologyKey: kubernetes.io/hostname
+        podAntiAffinity:
+          # 앱 파드끼리 같은 노드를 피한다 (가능하면). 노드 하나가 죽어도 한 개는 남게
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: jjhg-api
+                topologyKey: kubernetes.io/hostname
       containers:
         - name: api
           image: ghcr.io/silkair/infra-jjhg:sha-d685986
