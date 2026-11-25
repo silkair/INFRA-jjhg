@@ -29,7 +29,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
       containers:
         - name: api
-          image: ghcr.io/silkair/infra-jjhg:sha-d685986
+          image: ghcr.io/silkair/infra-jjhg:sha-3b7c4d9
           ports:
             - containerPort: 8080
           envFrom:
