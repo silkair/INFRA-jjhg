@@ -2,6 +2,7 @@ package me.jinjjahalgae.global.scheduler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import me.jinjjahalgae.domain.contract.usecase.process.*;
 import me.jinjjahalgae.domain.proof.usecase.schedule.CheckExpiredProofUseCase;
 import me.jinjjahalgae.global.scheduler.processor.ContractJobProcessor;
@@ -29,6 +30,10 @@ public class ScheduleManager {
      * - 인증 24시간(만료) 체크
      */
     @Scheduled(cron = "0 */5 * * * *")
+    // 파드가 여러 개면 락을 먼저 잡은 한 파드만 실행한다.
+    // lockAtMostFor: 파드가 죽어 락을 못 풀어도 4분 뒤 자동 해제 (다음 실행 전에 풀리도록 5분보다 짧게)
+    // lockAtLeastFor: 작업이 빨리 끝나도 30초는 락 유지 (파드 간 시계 차이로 다른 파드가 곧바로 다시 실행하는 것 방지)
+    @SchedulerLock(name = "fiveMinuteSchedule", lockAtMostFor = "PT4M", lockAtLeastFor = "PT30S")
     @Transactional
     public void fiveMinuteSchedule() {
         log.info("[Scheduler] 5분 스케줄러 시작. 현재 UTC 시간: {}", Instant.now());
@@ -54,6 +59,7 @@ public class ScheduleManager {
      * - 3번 수행 후 최종 실패 시 로그 출력
      */
     @Scheduled(cron = "0 1 15 * * *" )
+    @SchedulerLock(name = "daySchedule", lockAtMostFor = "PT30M", lockAtLeastFor = "PT1M")
     public void daySchedule() {
         log.info("[Scheduler] 하루 스케줄러 시작. 현재 UTC 시간: {}", Instant.now());
 

@@ -53,6 +53,10 @@ dependencies {
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // 분산 락: 파드가 여러 개여도 스케줄 작업은 한 파드에서만 실행 (락 저장소는 Redis)
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:6.9.2'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-redis-spring:6.9.2'
+
     // S3 SDK
     implementation 'software.amazon.awssdk:s3:2.31.77'
 
