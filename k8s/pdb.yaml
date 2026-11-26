@@ -1,0 +1,15 @@
+# 진짜할게 API 중단 예산 (PodDisruptionBudget)
+# 노드 비우기(drain)·업그레이드처럼 "계획된" 중단 때 앱 파드를 한 번에 1개까지만 내보내게 한다.
+# 새 파드가 다른 곳에서 Ready가 된 뒤에야 다음 파드를 내보낸다.
+# (노드가 갑자기 죽는 "계획되지 않은" 중단은 막지 못한다)
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: jjhg-api
+  namespace: jjhg
+spec:
+  # minAvailable 대신 maxUnavailable: HPA로 파드 수가 2~4개로 바뀌어도 "1개까지만 중단"이 그대로 맞는다
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: jjhg-api
