@@ -1,0 +1,41 @@
+# 진짜할게 API 자동 확장 (HPA)
+# metrics-server가 모은 파드 CPU 사용량을 보고 파드 수를 2~4개 사이에서 조절한다.
+# 파드 수는 HPA가 정하므로 Deployment(app.yaml)에는 replicas를 두지 않는다.
+# (두면 ArgoCD가 Git 값으로 되돌리고 HPA가 다시 바꾸는 싸움이 난다)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: jjhg-api
+  namespace: jjhg
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: jjhg-api
+  # 최소 2개: 노드 하나가 죽어도 한 개는 남게 (anti-affinity와 함께)
+  minReplicas: 2
+  # 최대 4개: 워커 2대(4 vCPU·6GB)에 노드당 2개. 더 늘려도 CPU가 천장이라 처리량은 늘지 않는다(A1)
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          # CPU 요청값(500m)의 70% = 파드 평균 350m를 넘으면 늘린다
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      # 늘릴 때는 기다리지 않는다. 15초마다 최대 2개씩
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 15
+    scaleDown:
+      # 줄일 때는 5분 동안 낮은 상태가 이어져야 줄인다(잠깐 한가해졌다고 줄였다 늘렸다 반복하지 않게)
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60

@@ -5,7 +5,7 @@ metadata:
   name: jjhg-api
   namespace: jjhg
 spec:
-  replicas: 2
+  # replicas는 두지 않는다. 파드 수는 HPA(hpa.yaml)가 2~4개 사이에서 정한다
   selector:
     matchLabels:
       app: jjhg-api
