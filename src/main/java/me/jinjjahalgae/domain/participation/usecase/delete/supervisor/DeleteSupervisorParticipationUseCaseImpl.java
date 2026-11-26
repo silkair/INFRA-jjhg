@@ -8,7 +8,6 @@ import me.jinjjahalgae.domain.notification.enums.NotificationType;
 import me.jinjjahalgae.domain.notification.usecase.listener.event.NotificationEvent;
 import me.jinjjahalgae.domain.participation.entity.Participation;
 import me.jinjjahalgae.domain.participation.enums.Role;
-import me.jinjjahalgae.domain.user.User;
 import me.jinjjahalgae.global.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -29,7 +28,7 @@ public class DeleteSupervisorParticipationUseCaseImpl implements DeleteSuperviso
 
     @Override
     @Transactional
-    public void execute(Long contractId, User user) {
+    public void execute(Long contractId, Long userId) {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> ErrorCode.CONTRACT_NOT_FOUND.serviceException("존재하지 않는 계약 입니다. id =" + contractId));
 
@@ -37,7 +36,7 @@ public class DeleteSupervisorParticipationUseCaseImpl implements DeleteSuperviso
         // 감독자로 있지 않은 계약의 감독 철회 요청을 한 경우 예외 반환
         Participation supervisorParticipation = contract.getParticipations()
                 .stream()
-                .filter(p -> p.getUser().getId().equals(user.getId()) && p.getRole() == Role.SUPERVISOR)
+                .filter(p -> p.getUser().getId().equals(userId) && p.getRole() == Role.SUPERVISOR)
                 .findFirst()
                 .orElseThrow(() -> ErrorCode.SUPERVISOR_PARTICIPATION_NOT_FOUND.serviceException("해당 계약에 감독으로 참여하고 있지 않습니다."));
 
@@ -53,7 +52,7 @@ public class DeleteSupervisorParticipationUseCaseImpl implements DeleteSuperviso
         eventPublisher.publishEvent(new NotificationEvent(
                 NotificationType.SUPERVISOR_WITHDRAWN,
                 contractId,
-                user.getId()
+                userId
         ));
 
         // redis의 해당 계약 감독자 자리 증가

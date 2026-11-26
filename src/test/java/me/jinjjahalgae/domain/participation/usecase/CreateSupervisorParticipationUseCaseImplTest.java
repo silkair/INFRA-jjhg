@@ -6,6 +6,7 @@ import me.jinjjahalgae.domain.invite.util.InviteTestUtil;
 import me.jinjjahalgae.domain.participation.usecase.create.contractor.dto.CreateContractorParticipationRequest;
 import me.jinjjahalgae.domain.participation.usecase.create.supervisor.CreateSupervisorParticipationUseCaseImpl;
 import me.jinjjahalgae.domain.user.User;
+import me.jinjjahalgae.domain.user.UserRepository;
 import me.jinjjahalgae.global.exception.AppException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +28,8 @@ class CreateSupervisorParticipationUseCaseImplTest {
 
     @Mock
     private ContractRepository contractRepository;
+    @Mock
+    private UserRepository userRepository;
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
     @Mock
@@ -57,9 +60,10 @@ class CreateSupervisorParticipationUseCaseImplTest {
         CreateContractorParticipationRequest request = new CreateContractorParticipationRequest("image-key");
         when(contractRepository.findById(contract.getId())).thenReturn(Optional.of(contract));
         when(valueOperations.get(supervisorCountKey)).thenReturn(5); // 자리가 남아있음
+        when(userRepository.getReferenceById(user.getId())).thenReturn(user);
 
         // when
-        createSupervisorParticipationUseCase.execute(contract.getId(), request, user);
+        createSupervisorParticipationUseCase.execute(contract.getId(), request, user.getId());
 
         // then
         assertThat(contract.getParticipations()).hasSize(1);
@@ -77,7 +81,7 @@ class CreateSupervisorParticipationUseCaseImplTest {
 
         // when & then
         assertThrows(AppException.class,
-                () -> createSupervisorParticipationUseCase.execute(contract.getId(), request, user));
+                () -> createSupervisorParticipationUseCase.execute(contract.getId(), request, user.getId()));
     }
 
     @Test
@@ -93,6 +97,6 @@ class CreateSupervisorParticipationUseCaseImplTest {
 
         // when & then
         assertThrows(AppException.class,
-                () -> createSupervisorParticipationUseCase.execute(contract.getId(), request, user));
+                () -> createSupervisorParticipationUseCase.execute(contract.getId(), request, user.getId()));
     }
 }

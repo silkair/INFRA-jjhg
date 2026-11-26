@@ -1,8 +1,6 @@
 package me.jinjjahalgae.global.security.jwt;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import me.jinjjahalgae.domain.user.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,11 +8,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 
-@Getter
+/**
+ * 인증된 사용자. 회원 엔티티 대신 id만 가진다.
+ * 필터에서 회원을 DB로 조회하지 않기 위해서다(ActiveUserCache 참고).
+ * 회원 엔티티가 필요한 곳은 유스케이스 안에서 id로 가져온다.
+ */
 @RequiredArgsConstructor
 public class CustomJwtPrincipal implements UserDetails {
-    // 진짜할게 User
-    private final User user;
+    private final Long userId;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -34,7 +35,7 @@ public class CustomJwtPrincipal implements UserDetails {
     }
 
     // getUsername을 사용하지 않고 명시적으로 userId 가져오기 위함
-    public Long getUserId(){
-        return user.getId();
+    public Long getUserId() {
+        return userId;
     }
 }

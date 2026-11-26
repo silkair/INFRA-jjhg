@@ -55,7 +55,7 @@ class PatchSupervisorParticipationUseCaseImplTest {
         when(contractRepository.findById(contract.getId())).thenReturn(Optional.of(contract));
 
         // when
-        patchSupervisorParticipationUseCase.execute(contract.getId(), supervisor);
+        patchSupervisorParticipationUseCase.execute(contract.getId(), supervisor.getId());
 
         // then
         assertThat(participation.getValid()).isFalse(); // valid가 false로 변경되었는지 확인
@@ -71,7 +71,7 @@ class PatchSupervisorParticipationUseCaseImplTest {
 
         // when & then
         assertThrows(AppException.class,
-                () -> patchSupervisorParticipationUseCase.execute(contract.getId(), supervisor));
+                () -> patchSupervisorParticipationUseCase.execute(contract.getId(), supervisor.getId()));
     }
 
     @Test
@@ -84,6 +84,6 @@ class PatchSupervisorParticipationUseCaseImplTest {
 
         // when & then
         assertThrows(AppException.class,
-                () -> patchSupervisorParticipationUseCase.execute(contract.getId(), supervisor));
+                () -> patchSupervisorParticipationUseCase.execute(contract.getId(), supervisor.getId()));
     }
 }

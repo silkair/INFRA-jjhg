@@ -63,7 +63,7 @@ class DeleteSupervisorParticipationUseCaseImplTest {
         when(contractRepository.findById(contract.getId())).thenReturn(Optional.of(contract));
 
         // when
-        deleteSupervisorParticipationUseCase.execute(contract.getId(), supervisor);
+        deleteSupervisorParticipationUseCase.execute(contract.getId(), supervisor.getId());
 
         // then
         assertThat(contract.getParticipations()).isEmpty(); // 참여 정보가 삭제되었는지 확인
@@ -79,7 +79,7 @@ class DeleteSupervisorParticipationUseCaseImplTest {
 
         // when & then
         assertThrows(AppException.class,
-                () -> deleteSupervisorParticipationUseCase.execute(contract.getId(), supervisor));
+                () -> deleteSupervisorParticipationUseCase.execute(contract.getId(), supervisor.getId()));
     }
 
     @Test
@@ -91,6 +91,6 @@ class DeleteSupervisorParticipationUseCaseImplTest {
 
         // when & then
         assertThrows(AppException.class,
-                () -> deleteSupervisorParticipationUseCase.execute(contract.getId(), supervisor));
+                () -> deleteSupervisorParticipationUseCase.execute(contract.getId(), supervisor.getId()));
     }
 }

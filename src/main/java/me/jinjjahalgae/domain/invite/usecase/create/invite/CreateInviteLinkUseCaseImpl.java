@@ -9,7 +9,6 @@ import me.jinjjahalgae.domain.contract.repository.ContractRepository;
 import me.jinjjahalgae.domain.invite.mapper.InviteMapper;
 import me.jinjjahalgae.domain.invite.model.InviteInfo;
 import me.jinjjahalgae.domain.invite.usecase.create.invite.dto.InviteLinkResponse;
-import me.jinjjahalgae.domain.user.User;
 import me.jinjjahalgae.global.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -43,12 +42,12 @@ public class CreateInviteLinkUseCaseImpl implements CreateInviteLinkUseCase {
     private String SUPERVISOR_COUNT_PREFIX;
 
     @Override
-    public InviteLinkResponse execute(Long contractId, User user) {
+    public InviteLinkResponse execute(Long contractId, Long userId) {
         Contract contract = contractRepository.findByIdWithUser(contractId)
                 .orElseThrow(() -> ErrorCode.CONTRACT_NOT_FOUND.serviceException("존재하지 않는 계약 입니다. id =" + contractId));
 
         // 자신의 계약만 초대링크 생성 가능
-        if(!contract.getUser().getId().equals(user.getId())) {
+        if(!contract.getUser().getId().equals(userId)) {
             throw ErrorCode.ACCESS_DENIED.serviceException("자신의 계약에만 초대링크 생성이 가능합니다.");
         }
 

@@ -11,6 +11,7 @@ import me.jinjjahalgae.domain.participation.usecase.create.contractor.dto.Create
 import me.jinjjahalgae.domain.participation.entity.Participation;
 import me.jinjjahalgae.domain.participation.enums.Role;
 import me.jinjjahalgae.domain.user.User;
+import me.jinjjahalgae.domain.user.UserRepository;
 import me.jinjjahalgae.global.exception.ErrorCode;
 import me.jinjjahalgae.global.storage.redis.usecase.invite.delete.DeleteInviteInfoUseCase;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,7 @@ public class CreateSupervisorParticipationUseCaseImpl implements CreateSuperviso
     private final RedisTemplate<String, Object> redisTemplate;
     private final ContractRepository contractRepository;
     private final ParticipationRepository participationRepository;
+    private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     private final DeleteInviteInfoUseCase deleteInviteInfoUseCase;
@@ -35,7 +37,7 @@ public class CreateSupervisorParticipationUseCaseImpl implements CreateSuperviso
 
     @Override
     @Transactional
-    public void execute(Long contractId, CreateContractorParticipationRequest request, User user) {
+    public void execute(Long contractId, CreateContractorParticipationRequest request, Long userId) {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> ErrorCode.CONTRACT_NOT_FOUND.serviceException("존재하지 않는 계약 입니다. id =" + contractId));
 
@@ -45,14 +47,14 @@ public class CreateSupervisorParticipationUseCaseImpl implements CreateSuperviso
         }
 
         // 본인이 계약자인지 확인
-        boolean isContractor = participationRepository.existsByContractIdAndUserIdAndRole(contractId, user.getId(), Role.CONTRACTOR);
+        boolean isContractor = participationRepository.existsByContractIdAndUserIdAndRole(contractId, userId, Role.CONTRACTOR);
 
         if (isContractor) {
             throw ErrorCode.CANNOT_PARTICIPATE_SELF_CONTRACT.serviceException("본인이 생성한 계약에는 감독자로 참여할 수 없습니다.");
         }
 
         // 이미 참여한 사용자인지 확인
-        boolean isParticipated = participationRepository.existsByContractIdAndUserId(contract.getId(), user.getId());
+        boolean isParticipated = participationRepository.existsByContractIdAndUserId(contract.getId(), userId);
 
         if (isParticipated) {
             throw ErrorCode.INVITE_ALREADY_PARTICIPATED.serviceException("이미 참여한 계약입니다.");
@@ -68,6 +70,9 @@ public class CreateSupervisorParticipationUseCaseImpl implements CreateSuperviso
         } else {
             throw ErrorCode.INVITE_NOT_FOUND.serviceException("존재하지 않거나 만료된 초대정보 입니다.");
         }
+
+        // 참여 정보에 연결할 회원. 조회 없이 참조만 만든다(인증 단계에서 탈퇴 여부 확인됨)
+        User user = userRepository.getReferenceById(userId);
 
         // 새로운 참여 정보 생성
         Participation newParticipation = Participation.builder()
@@ -85,7 +90,7 @@ public class CreateSupervisorParticipationUseCaseImpl implements CreateSuperviso
         eventPublisher.publishEvent(new NotificationEvent(
                 NotificationType.SUPERVISOR_ADDED,
                 contractId,
-                user.getId()
+                userId
         ));
 
         // redis의 해당 계약 감독자 자리 감소
