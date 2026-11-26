@@ -5,8 +5,7 @@ metadata:
   name: jjhg-api
   namespace: jjhg
 spec:
-  # R3′ 대조 측정: 2개. 스케줄러 중복 실행은 B1-1에서 분산 락으로 막는다
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: jjhg-api
@@ -18,13 +17,14 @@ spec:
         config-rev: "3"
     spec:
       affinity:
-        # R4: MySQL과 같은 노드에 둔다 (R2′와 같은 배치)
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels:
-                  app: mysql
-              topologyKey: kubernetes.io/hostname
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: jjhg-api
+                topologyKey: kubernetes.io/hostname
       containers:
         - name: api
           image: ghcr.io/silkair/infra-jjhg:sha-3b7c4d9
@@ -33,7 +33,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: jjhg-api-config
-          env:                       # 비밀값은 Secret에서 꺼내 앱이 기대하는 이름으로 넣는다
+          env:
             - name: DEV_DB_PASSWORD
               valueFrom:
                 secretKeyRef: { name: jjhg-secrets, key: MYSQL_ROOT_PASSWORD }
