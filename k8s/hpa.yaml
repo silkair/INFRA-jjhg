@@ -15,7 +15,7 @@ spec:
   # 최소 2개: 노드 하나가 죽어도 한 개는 남게 (anti-affinity와 함께)
   minReplicas: 2
   # 최대 4개: 워커 2대(4 vCPU·6GB)에 노드당 2개. 더 늘려도 CPU가 천장이라 처리량은 늘지 않는다(A1)
-  maxReplicas: 4
+  maxReplicas: 2   # B1-3 측정 동안 임시로 2개 고정(HPA가 끼어들지 않게). 측정 후 4로 되돌린다
   metrics:
     - type: Resource
       resource:
