@@ -6,6 +6,8 @@ metadata:
   namespace: jjhg
 data:
   SPRING_JPA_SHOW_SQL: "false"
+  # SIGTERM을 받으면 새 요청은 거절하고 처리 중인 요청은 끝낸 뒤 종료한다(Spring Boot 3.4+ 기본값이지만 명시)
+  SERVER_SHUTDOWN: graceful
   SPRING_PROFILES_ACTIVE: dev
   # DB·Redis는 클러스터 안 Service 이름으로 찾는다 (<서비스>.<네임스페이스>.svc.cluster.local)
   DEV_DB_URL: jdbc:mysql://mysql.jjhg.svc.cluster.local:3306/jjhg?serverTimezone=UTC

@@ -16,6 +16,8 @@ spec:
       annotations:
         config-rev: "3"
     spec:
+      # 종료 순서: preStop 10초 대기 → SIGTERM → Spring 정상 종료(최대 30초). 합계보다 넉넉하게 45초
+      terminationGracePeriodSeconds: 45
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -49,6 +51,13 @@ spec:
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef: { name: jjhg-secrets, key: S3_SECRET_KEY }
+          # 파드가 종료될 때 바로 내려가지 않고 10초 기다린다.
+          # 그동안 Envoy·Service가 이 파드를 대상에서 빼므로, 종료 중인 파드로 요청이 가서
+          # "Connection refused"(503)가 나는 것을 막는다 (B1-3 drain 측정에서 확인)
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 10
           # 기동이 느린 Java 앱: 첫 기동은 최대 3분까지 기다린다
           startupProbe:
             httpGet: { path: /actuator/health, port: 8080 }
