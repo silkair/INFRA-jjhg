@@ -1,0 +1,22 @@
+06:29:47 NAME                      READY   STATUS    RESTARTS   AGE    IP             NODE     NOMINATED NODE   READINESS GATES
+06:29:47 jjhg-api-8d6bdc69-2vcnl   1/1     Running   0          106m   10.244.46.25   k8s-w2   <none>           <none>
+06:29:47 jjhg-api-8d6bdc69-8lbsc   1/1     Running   0          106m   10.244.46.31   k8s-w2   <none>           <none>
+06:32:19 jjhg-api-779bf95fcf-dtmn5   0/1     Pending   0          0s     <none>         <none>   <none>           <none>
+06:32:19 jjhg-api-779bf95fcf-dtmn5   0/1     Pending   0          0s     <none>         k8s-w1   <none>           <none>
+06:32:19 jjhg-api-779bf95fcf-dtmn5   0/1     ContainerCreating   0          0s     <none>         k8s-w1   <none>           <none>
+06:32:19 jjhg-api-779bf95fcf-dtmn5   0/1     ContainerCreating   0          0s     <none>         k8s-w1   <none>           <none>
+06:32:20 jjhg-api-779bf95fcf-dtmn5   0/1     ContainerCreating   0          0s     <none>         k8s-w1   <none>           <none>
+06:32:21 jjhg-api-779bf95fcf-dtmn5   0/1     ErrImagePull        0          2s     10.244.228.74   k8s-w1   <none>           <none>
+06:32:33 jjhg-api-779bf95fcf-dtmn5   0/1     ImagePullBackOff    0          14s    10.244.228.74   k8s-w1   <none>           <none>
+06:32:47 jjhg-api-779bf95fcf-dtmn5   0/1     ErrImagePull        0          28s    10.244.228.74   k8s-w1   <none>           <none>
+06:33:01 jjhg-api-779bf95fcf-dtmn5   0/1     ImagePullBackOff    0          42s    10.244.228.74   k8s-w1   <none>           <none>
+06:33:13 jjhg-api-779bf95fcf-dtmn5   0/1     ErrImagePull        0          54s    10.244.228.74   k8s-w1   <none>           <none>
+06:33:26 jjhg-api-779bf95fcf-dtmn5   0/1     ImagePullBackOff    0          67s    10.244.228.74   k8s-w1   <none>           <none>
+06:34:08 jjhg-api-779bf95fcf-dtmn5   0/1     ErrImagePull        0          109s   10.244.228.74   k8s-w1   <none>           <none>
+06:34:19 jjhg-api-779bf95fcf-dtmn5   0/1     ImagePullBackOff    0          2m     10.244.228.74   k8s-w1   <none>           <none>
+06:35:35 jjhg-api-779bf95fcf-dtmn5   0/1     ErrImagePull        0          3m16s   10.244.228.74   k8s-w1   <none>           <none>
+06:35:49 jjhg-api-779bf95fcf-dtmn5   0/1     ImagePullBackOff    0          3m30s   10.244.228.74   k8s-w1   <none>           <none>
+06:36:24 jjhg-api-8d6bdc69-8lbsc     1/1     Running             0          113m    10.244.46.31    k8s-w2   <none>           <none>
+06:36:24 jjhg-api-8d6bdc69-2vcnl     1/1     Running             0          112m    10.244.46.25    k8s-w2   <none>           <none>
+06:38:24 jjhg-api-779bf95fcf-dtmn5   0/1     ErrImagePull        0          6m5s    10.244.228.74   k8s-w1   <none>           <none>
+06:38:35 jjhg-api-779bf95fcf-dtmn5   0/1     ImagePullBackOff    0          6m16s   10.244.228.74   k8s-w1   <none>           <none>
